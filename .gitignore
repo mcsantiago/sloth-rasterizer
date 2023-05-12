@@ -1,0 +1,9 @@
+*.o
+output.tga
+main
+
+# IDEA specific
+.idea
+
+# VSCode specific
+.vscode

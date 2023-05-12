@@ -3,21 +3,25 @@ CPPFLAGS     =
 LDFLAGS      =
 LIBS         = -lm
 
-DESTDIR = ./
-TARGET  = main
+DESTDIR = bin/
+TARGET  = $(DESTDIR)main
 
-OBJECTS := $(patsubst %.cpp,%.o,$(wildcard *.cpp))
+SOURCE_FILES := $(wildcard *.cpp)
+OBJECTS := $(patsubst %.cpp,$(DESTDIR)%.o,$(SOURCE_FILES))
 
-all: $(DESTDIR)$(TARGET)
+all: $(TARGET)
 
-$(DESTDIR)$(TARGET): $(OBJECTS)
-	$(SYSCONF_LINK) -Wall $(LDFLAGS) -o $(DESTDIR)$(TARGET) $(OBJECTS) $(LIBS)
+$(TARGET): $(OBJECTS)
+	$(SYSCONF_LINK) -Wall $(LDFLAGS) -o $(TARGET) $(OBJECTS) $(LIBS)
 
-$(OBJECTS): %.o: %.cpp
+$(OBJECTS): | $(DESTDIR)  # Ensure the directory exists before compiling objects
+$(DESTDIR):
+	mkdir -p $(DESTDIR)
+
+$(OBJECTS): $(DESTDIR)%.o: %.cpp
 	$(SYSCONF_LINK) -Wall $(CPPFLAGS) -c $(CFLAGS) $< -o $@
 
 clean:
 	-rm -f $(OBJECTS)
 	-rm -f $(TARGET)
 	-rm -f *.tga
-
