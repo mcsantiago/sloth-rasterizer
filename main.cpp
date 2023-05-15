@@ -39,36 +39,30 @@ void line(int x0, int y0, int x1, int y1, TGAImage &image, TGAColor color) {
 	}
 }
 
-void triangle(Vec2i p1, Vec2i p2, Vec2i p3, TGAImage &image, const TGAColor &color) {
-    line(p1.x, p1.y, p2.x, p2.y, image, color);
-    line(p2.x, p2.y, p3.x, p3.y, image, color);
-    line(p3.x, p3.y, p1.x, p1.y, image, color);
-
-    Vec3i a = Vec3i(p1);
-    Vec3i b = Vec3i(p2);
-    Vec3i c = Vec3i(p3);
+void triangle(Vec2i *points, TGAImage &image, const TGAColor &color) {
+    Vec3i a = Vec3i(points[0]);
+    Vec3i b = Vec3i(points[1]);
+    Vec3i c = Vec3i(points[2]);
     Vec3i ab = a - b;
     Vec3i bc = b - c;
     Vec3i ca = c - a;
 
     // Create the bounding box
-    int minX = p1.x;
-    int maxX = p1.x;
-    int minY = p1.y;
-    int maxY = p1.y;
+    Vec2i bboxmin = Vec2i(image.get_width() - 1, image.get_height() - 1);
+    Vec2i bboxmax = Vec2i(0, 0);
+    Vec2i maxClamp = Vec2i(image.get_width() - 1, image.get_height() - 1);
 
-    if (p2.x < minX) minX = p2.x;
-    if (p3.x < minX) minX = p3.x;
-    if (p2.x > maxX) maxX = p2.x;
-    if (p3.x > maxX) maxX = p3.x;
-    if (p2.y < minY) minY = p2.y;
-    if (p3.y < minY) minY = p3.y;
-    if (p2.y > maxY) maxY = p2.y;
-    if (p3.y > maxY) maxY = p3.y;
+    for (int i = 0; i < 3; i++) {
+        bboxmin.x = std::max(0, std::min(bboxmin.x, points[i].x));
+        bboxmin.y = std::max(0, std::min(bboxmin.y, points[i].y));
+
+        bboxmax.x = std::min(maxClamp.x, std::max(bboxmax.x, points[i].x));
+        bboxmax.y = std::min(maxClamp.y, std::max(bboxmax.y, points[i].y));
+    }
 
     // Go through each horizontal line and check if each point x in the line is in the triangle
-    for (int y = minY; y <= maxY; y++) {
-        for (int x = minX; x <= maxX; x++) {
+    for (int y = bboxmin.y; y <= bboxmax.y; y++) {
+        for (int x = bboxmin.x; x <= bboxmax.x; x++) {
             // Create AP, BP, CP vectors
             Vec3i ap = a - Vec3i(x, y, 0);
             Vec3i bp = b - Vec3i(x, y, 0);
@@ -103,9 +97,10 @@ void drawModelMesh(Model *model, TGAImage &image, TGAColor) {
 
 int main(int argc, char **argv) {
 	TGAImage image(WIDTH, HEIGHT, TGAImage::RGBA);
+    Vec2i trianglePoints[3] = {Vec2i(2,3), Vec2i(45, -30), Vec2i(369, 72)};
 //    auto *model = new Model("../obj/test_head.obj");
 //    drawModelMesh(model, image, WHITE);
-    triangle(Vec2i(2,3), Vec2i(45, 30), Vec2i(69, 72), image, ORANGE);
+    triangle(trianglePoints, image, ORANGE);
 	image.flip_vertically(); // i want to have the origin at the left bottom corner of the image
 	image.write_tga_file("output.tga");
     std::cout << "File successfully written: output.tga" << std::endl;
