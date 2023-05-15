@@ -5,8 +5,8 @@
 const TGAColor WHITE = TGAColor(255, 255, 255, 255);
 const TGAColor ORANGE = TGAColor(240, 169, 24, 240);
 const TGAColor MAGENTA = TGAColor(227, 34, 108, 227);
-const int WIDTH = 200;
-const int HEIGHT = 200;
+const int WIDTH = 800;
+const int HEIGHT = 600;
 
 void line(int x0, int y0, int x1, int y1, TGAImage &image, TGAColor color) {
 	bool steep = false;
@@ -80,17 +80,23 @@ void triangle(Vec2i *points, TGAImage &image, const TGAColor &color) {
     }
 }
 
-void drawModelMesh(Model *model, TGAImage &image, TGAColor) {
+void drawModelMesh(Model *model, TGAImage &image, TGAColor color) {
+    Vec3f light_dir(0, 0, -1.);
+
     for (int i=0; i<model->nfaces(); i++) {
         std::vector<int> face = model->face(i);
+        Vec2i screen_coords[3];
+        Vec3f world_coords[3];
         for (int j=0; j<3; j++) {
-            Vec3f v0 = model->vert(face[j]);
-            Vec3f v1 = model->vert(face[(j+1)%3]);
-            int x0 = (v0.x+1.)*WIDTH/2.;
-            int y0 = (v0.y+1.)*HEIGHT/2.;
-            int x1 = (v1.x+1.)*WIDTH/2.;
-            int y1 = (v1.y+1.)*HEIGHT/2.;
-            line(x0, y0, x1, y1, image, WHITE);
+            Vec3f v = model->vert(face[j]);
+            screen_coords[j] = Vec2i((v.x+1.)*WIDTH/2., (v.y+1)*HEIGHT/2.);
+            world_coords[j] = v;
+        }
+        Vec3f normal = (world_coords[2]-world_coords[0])^(world_coords[1]-world_coords[0]);
+        normal.normalize();
+        float intensity = normal*light_dir;
+        if (intensity > 0) {
+            triangle(screen_coords, image, TGAColor(intensity*255, intensity*255, intensity*255, 255));
         }
     }
 }
@@ -98,9 +104,9 @@ void drawModelMesh(Model *model, TGAImage &image, TGAColor) {
 int main(int argc, char **argv) {
 	TGAImage image(WIDTH, HEIGHT, TGAImage::RGBA);
     Vec2i trianglePoints[3] = {Vec2i(2,3), Vec2i(45, -30), Vec2i(369, 72)};
-//    auto *model = new Model("../obj/test_head.obj");
-//    drawModelMesh(model, image, WHITE);
-    triangle(trianglePoints, image, ORANGE);
+    auto *model = new Model("../obj/test_head.obj");
+    drawModelMesh(model, image, WHITE);
+//    triangle(trianglePoints, image, ORANGE);
 	image.flip_vertically(); // i want to have the origin at the left bottom corner of the image
 	image.write_tga_file("output.tga");
     std::cout << "File successfully written: output.tga" << std::endl;
