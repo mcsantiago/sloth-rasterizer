@@ -1,5 +1,6 @@
 *.o
-output.tga
+*.tga
+*.png
 main
 
 # IDEA specific

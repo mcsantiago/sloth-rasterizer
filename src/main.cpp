@@ -1,14 +1,17 @@
-#include "tgaimage.h"
-#include "model.h"
 #include <iostream>
+#include "model.h"
+#include "image.h"
 
-const TGAColor WHITE = TGAColor(255, 255, 255, 255);
-const TGAColor ORANGE = TGAColor(240, 169, 24, 240);
-const TGAColor MAGENTA = TGAColor(227, 34, 108, 227);
+const Color WHITE = Color(255, 255, 255, 255);
+const Color ORANGE = Color(240, 169, 24, 240);
+const Color MAGENTA = Color(255, 255, 255, 227);
+
 const int WIDTH = 800;
 const int HEIGHT = 600;
+const int CHANNELS = 4;
+unsigned char *frameBuffer = new unsigned char[WIDTH * HEIGHT * CHANNELS];
 
-void line(int x0, int y0, int x1, int y1, TGAImage &image, TGAColor color) {
+void line(int x0, int y0, int x1, int y1, Image &image, Color color) {
 	bool steep = false;
 	if (std::abs(x1-x0) < std::abs(y1-y0)) {
 		std::swap(x0, y0);
@@ -25,9 +28,9 @@ void line(int x0, int y0, int x1, int y1, TGAImage &image, TGAColor color) {
 	int y = y0;
 	for (int x = x0; x < x1; x++) {
 		if (steep) {
-			image.set(y, x, color);
+			image.setPixel(y, x, color);
 		} else {
-			image.set(x, y, color);
+			image.setPixel(x, y, color);
 		}
 
 		if (p < 0) {
@@ -39,7 +42,7 @@ void line(int x0, int y0, int x1, int y1, TGAImage &image, TGAColor color) {
 	}
 }
 
-void triangle(Vec2i *points, TGAImage &image, const TGAColor &color) {
+void triangle(Vec2i *points, Image &image, const Color &color) {
     Vec3i a = Vec3i(points[0]);
     Vec3i b = Vec3i(points[1]);
     Vec3i c = Vec3i(points[2]);
@@ -48,9 +51,9 @@ void triangle(Vec2i *points, TGAImage &image, const TGAColor &color) {
     Vec3i ca = c - a;
 
     // Create the bounding box
-    Vec2i bboxmin = Vec2i(image.get_width() - 1, image.get_height() - 1);
+    Vec2i bboxmin = Vec2i(image.getWidth() - 1, image.getHeight() - 1);
     Vec2i bboxmax = Vec2i(0, 0);
-    Vec2i maxClamp = Vec2i(image.get_width() - 1, image.get_height() - 1);
+    Vec2i maxClamp = Vec2i(image.getWidth() - 1, image.getHeight() - 1);
 
     for (int i = 0; i < 3; i++) {
         bboxmin.x = std::max(0, std::min(bboxmin.x, points[i].x));
@@ -74,13 +77,13 @@ void triangle(Vec2i *points, TGAImage &image, const TGAColor &color) {
 
             if ((cross1.z > 0 && cross2.z > 0 && cross3.z > 0) ||
                 (cross1.z < 0 && cross2.z < 0 && cross3.z < 0)) {
-                image.set(x, y, color);
+                image.setPixel(x, y, color);
             }
         }
     }
 }
 
-void drawModelMesh(Model *model, TGAImage &image, TGAColor color) {
+void drawModelMesh(Model *model, Image &image, Color color) {
     Vec3f light_dir(0, 0, -1.);
 
     for (int i=0; i<model->nfaces(); i++) {
@@ -96,19 +99,20 @@ void drawModelMesh(Model *model, TGAImage &image, TGAColor color) {
         normal.normalize();
         float intensity = normal*light_dir;
         if (intensity > 0) {
-            triangle(screen_coords, image, TGAColor(intensity*255, intensity*255, intensity*255, 255));
+            triangle(screen_coords, image, Color(intensity*255, intensity*255, intensity*255, 255));
         }
     }
 }
 
 int main(int argc, char **argv) {
-	TGAImage image(WIDTH, HEIGHT, TGAImage::RGBA);
+//	TGAImage image(WIDTH, HEIGHT, TGAImage::RGBA);
+    Image image(WIDTH, HEIGHT, Channel::RGBA);
     Vec2i trianglePoints[3] = {Vec2i(2,3), Vec2i(45, -30), Vec2i(369, 72)};
     auto *model = new Model("../obj/test_head.obj");
     drawModelMesh(model, image, WHITE);
 //    triangle(trianglePoints, image, ORANGE);
-	image.flip_vertically(); // i want to have the origin at the left bottom corner of the image
-	image.write_tga_file("output.tga");
-    std::cout << "File successfully written: output.tga" << std::endl;
+	image.flipVertically(); // i want to have the origin at the left bottom corner of the image
+	image.writeToDiskAsPNG("output.png");
+    std::cout << "File successfully written: output.png" << std::endl;
 	return 0;
 }
