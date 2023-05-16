@@ -1,24 +1,25 @@
 SYSCONF_LINK = g++
-CPPFLAGS     =
+CPPFLAGS     = -Isrc/include
 LDFLAGS      =
 LIBS         = -lm
 
 DESTDIR = bin/
+OBJDIR = obj/
 TARGET  = $(DESTDIR)main
 
-SOURCE_FILES := $(wildcard *.cpp)
-OBJECTS := $(patsubst %.cpp,$(DESTDIR)%.o,$(SOURCE_FILES))
+SOURCE_FILES := $(wildcard src/*.cpp)
+OBJECTS := $(patsubst src/%.cpp,$(OBJDIR)%.o,$(SOURCE_FILES))
 
 all: $(TARGET)
 
 $(TARGET): $(OBJECTS)
 	$(SYSCONF_LINK) -Wall $(LDFLAGS) -o $(TARGET) $(OBJECTS) $(LIBS)
 
-$(OBJECTS): | $(DESTDIR)  # Ensure the directory exists before compiling objects
-$(DESTDIR):
-	mkdir -p $(DESTDIR)
+$(OBJECTS): | $(OBJDIR)  # Ensure the directory exists before compiling objects
+$(OBJDIR):
+	mkdir -p $(OBJDIR)
 
-$(OBJECTS): $(DESTDIR)%.o: %.cpp
+$(OBJECTS): $(OBJDIR)%.o: src/%.cpp
 	$(SYSCONF_LINK) -Wall $(CPPFLAGS) -c $(CFLAGS) $< -o $@
 
 clean:
