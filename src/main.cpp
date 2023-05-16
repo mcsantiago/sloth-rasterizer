@@ -8,8 +8,6 @@ const Color MAGENTA = Color(255, 255, 255, 227);
 
 const int WIDTH = 800;
 const int HEIGHT = 600;
-const int CHANNELS = 4;
-unsigned char *frameBuffer = new unsigned char[WIDTH * HEIGHT * CHANNELS];
 
 void line(int x0, int y0, int x1, int y1, Image &image, Color color) {
 	bool steep = false;
@@ -71,9 +69,9 @@ void triangle(Vec2i *points, Image &image, const Color &color) {
             Vec3i bp = b - Vec3i(x, y, 0);
             Vec3i cp = c - Vec3i(x, y, 0);
 
-            Vec3i cross1 = ab.cross(ap);
-            Vec3i cross2 = bc.cross(bp);
-            Vec3i cross3 = ca.cross(cp);
+            Vec3i cross1 = ab^ap;
+            Vec3i cross2 = bc^bp;
+            Vec3i cross3 = ca^cp;
 
             if ((cross1.z > 0 && cross2.z > 0 && cross3.z > 0) ||
                 (cross1.z < 0 && cross2.z < 0 && cross3.z < 0)) {
@@ -105,12 +103,9 @@ void drawModelMesh(Model *model, Image &image, Color color) {
 }
 
 int main(int argc, char **argv) {
-//	TGAImage image(WIDTH, HEIGHT, TGAImage::RGBA);
     Image image(WIDTH, HEIGHT, Channel::RGBA);
-    Vec2i trianglePoints[3] = {Vec2i(2,3), Vec2i(45, -30), Vec2i(369, 72)};
     auto *model = new Model("../obj/test_head.obj");
     drawModelMesh(model, image, WHITE);
-//    triangle(trianglePoints, image, ORANGE);
 	image.flipVertically(); // i want to have the origin at the left bottom corner of the image
 	image.writeToDiskAsPNG("output.png");
     std::cout << "File successfully written: output.png" << std::endl;
